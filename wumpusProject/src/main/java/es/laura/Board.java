@@ -497,7 +497,7 @@ public class Board {
 	void shoot() {
 		if (arrows - 1 >= 0) {
 			if (wumpusInRange()) {
-				System.out.println("You have killed the Wumpus!!");
+				System.out.println("*(A deafening scream sounds...)* You have killed the Wumpus!!");
 				removeWumpus();
 			} else {
 				System.out.println("Sorry, I failed. Wumpus not in range.");
@@ -569,7 +569,7 @@ public class Board {
 	 *
 	 * @return value of actualOrientation
 	 */
-	public EnumOrientation getActualOrientation() {
+	EnumOrientation getActualOrientation() {
 		return actualOrientation;
 	}
 
@@ -578,7 +578,7 @@ public class Board {
 	 *
 	 * @return value of actualRow
 	 */
-	public int getActualRow() {
+	int getActualRow() {
 		return actualRow;
 	}
 
@@ -587,7 +587,7 @@ public class Board {
 	 *
 	 * @return value of actualCol
 	 */
-	public int getActualCol() {
+	int getActualCol() {
 		return actualCol;
 	}
 }
