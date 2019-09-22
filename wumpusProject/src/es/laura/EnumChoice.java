@@ -5,14 +5,11 @@ package es.laura;
  * @version 1.0.0
  */
 public enum EnumChoice {
-	UP("W", "Go up"),
-	DOWN("S", "Go down"),
-	LEFT("A", "Go left"),
-	RIGHT("D", "Go right"),
+	MOVE("W", "Move along"),
 	ROTATE_LEFT("Q", "Rotate 90º to left"),
 	ROTATE_RIGHT("E", "Rotate 90º to right"),
-	SHOOT("T", "Shoot forward"),
-	EXIT("Y", "Exit (only on exit box)"),
+	SHOOT("S", "Shoot forward"),
+	EXIT("X", "Exit (only on exit box)"),
 	HELP("H", "Help (all info about the keys)");
 
 	private String key;

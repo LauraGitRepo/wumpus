@@ -24,14 +24,20 @@ public class Board {
 	private int arrows;
 
 	/**
-	 * Board with all the cell data
+	 * Board with all the box data
 	 */
-	private EnumCell[][] board;
+	private EnumBox[][] board;
 
 	/**
-	 * Actual cell of the game
+	 * Actual box of the game: message, row, column and orintation
 	 */
-	private EnumCell actualCell = EnumCell.EXIT;
+	private String lastMessage = EnumBox.EXIT.getMessage();
+
+	private int actualRow;
+
+	private int actualCol;
+
+	private EnumOrientation actualOrientation = EnumOrientation.NORTH;
 
 	/**
 	 * Util for generate random numbers
@@ -49,29 +55,33 @@ public class Board {
 		this.width = width;
 		this.holes = holes;
 		this.arrows = arrows;
+		this.actualCol = 0;
+		this.actualRow = width - 1;
 		random = new Random();
 		createBoard();
-		for (EnumCell[] enumCells : board) System.out.println(Arrays.toString(enumCells));
+		for (EnumBox[] enumBoxes : board) System.out.println(Arrays.toString(enumBoxes));
+
+		setAndPrintMessage();
 	}
 
 	/**
 	 * Create a random but possible board
 	 */
 	private void createBoard() {
-		board = new EnumCell[width][width];
+		board = new EnumBox[width][width];
 
-		//Init with empty cells
+		//Init with empty boxs
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < width; j++) {
-				board[i][j] = EnumCell.EMPTY;
+				board[i][j] = EnumBox.EMPTY;
 			}
 		}
 
 		//Fill the board with data
-		board[width - 1][0] = EnumCell.EXIT; //Hunter always start at same place
+		board[width - 1][0] = EnumBox.EXIT; //Hunter always start at same place
 
-		fillRandomCell(EnumCell.WUMPUS); //Wumpus can be in any empty cell
-		fillRandomCell(EnumCell.GOLD); //Gold can be in any empty cell
+		fillRandomBox(EnumBox.WUMPUS); //Wumpus can be in any empty box
+		fillRandomBox(EnumBox.GOLD); //Gold can be in any empty box
 
 		if (!fillHoles()) {
 			createBoard();
@@ -79,18 +89,18 @@ public class Board {
 	}
 
 	/**
-	 * Fill the cell of Wumpus and Gold.
+	 * Fill the box of Wumpus and Gold.
 	 *
-	 * @param cell to fill
+	 * @param box to fill
 	 */
-	private void fillRandomCell(EnumCell cell) {
+	private void fillRandomBox(EnumBox box) {
 		int row = getRandomNumber();
 		int col = getRandomNumber();
-		EnumCell oldCell = board[row][col];
-		if (oldCell == EnumCell.EMPTY) {
-			board[row][col] = cell;
+		EnumBox oldBox = board[row][col];
+		if (oldBox == EnumBox.EMPTY) {
+			board[row][col] = box;
 		} else {
-			fillRandomCell(cell);
+			fillRandomBox(box);
 		}
 	}
 
@@ -99,7 +109,7 @@ public class Board {
 	 */
 	private boolean fillHoles() {
 		int holesFilled = 0;
-		Set<String> triedCells = new HashSet<>();
+		Set<String> triedBoxs = new HashSet<>();
 
 		boolean impossibleBoard = false;
 
@@ -107,23 +117,23 @@ public class Board {
 			int row = getRandomNumber();
 			int col = getRandomNumber();
 			String key = row + ";" + col;
-			EnumCell oldCell = board[row][col];
-			if (!triedCells.contains(key) && oldCell == EnumCell.EMPTY) {
+			EnumBox oldBox = board[row][col];
+			if (!triedBoxs.contains(key) && oldBox == EnumBox.EMPTY) {
 
-				EnumCell[][] boardCloned = new EnumCell[width][width];
+				EnumBox[][] boardCloned = new EnumBox[width][width];
 				System.arraycopy(board, 0, boardCloned, 0, boardCloned.length);
 
-				boardCloned[row][col] = EnumCell.HOLE;
+				boardCloned[row][col] = EnumBox.HOLE;
 
 				if (isWinPossible(boardCloned)) {
-					board[row][col] = EnumCell.HOLE;
+					board[row][col] = EnumBox.HOLE;
 					holesFilled++;
 				} else {
-					boardCloned[row][col] = EnumCell.EMPTY;
+					boardCloned[row][col] = EnumBox.EMPTY;
 				}
 			}
-			triedCells.add(key);
-			if (triedCells.size() == width * width) {
+			triedBoxs.add(key);
+			if (triedBoxs.size() == width * width) {
 				impossibleBoard = true; //can't fill the board with this data. Try again
 			}
 		}
@@ -136,7 +146,7 @@ public class Board {
 	 * @param boardCloned temporal board
 	 * @return if is possible to win or not with this stage
 	 */
-	private boolean isWinPossible(EnumCell[][] boardCloned) {
+	private boolean isWinPossible(EnumBox[][] boardCloned) {
 		int actualRow = width - 1;
 		int actualCol = 0;
 		if (isGoldAdjacent(actualRow, actualCol)) {
@@ -163,9 +173,9 @@ public class Board {
 			int nextRow = actualRow - 1;
 			int nextCol = actualCol;
 			if (nextRow < width && nextCol < width && nextRow >= 0 && nextCol >= 0) {
-				EnumCell nextCell = boardCloned[nextRow][nextCol];
-				boolean nextCellVisited = boardVisits[nextRow][nextCol];
-				if ((nextCell == EnumCell.EMPTY || nextCell == EnumCell.WUMPUS) && !nextCellVisited) { //Wumpus and empty are possible options for walk
+				EnumBox nextBox = boardCloned[nextRow][nextCol];
+				boolean nextBoxVisited = boardVisits[nextRow][nextCol];
+				if ((nextBox == EnumBox.EMPTY || nextBox == EnumBox.WUMPUS) && !nextBoxVisited) { //Wumpus and empty are possible options for walk
 					if (isGoldAdjacent(nextRow, nextCol)) {
 						return true;
 					}
@@ -180,9 +190,9 @@ public class Board {
 				nextRow = actualRow;
 				nextCol = actualCol + 1;
 				if (nextRow < width && nextCol < width && nextRow >= 0 && nextCol >= 0) {
-					EnumCell nextCell = boardCloned[nextRow][nextCol];
-					boolean nextCellVisited = boardVisits[nextRow][nextCol];
-					if ((nextCell == EnumCell.EMPTY || nextCell == EnumCell.WUMPUS) && !nextCellVisited) {
+					EnumBox nextBox = boardCloned[nextRow][nextCol];
+					boolean nextBoxVisited = boardVisits[nextRow][nextCol];
+					if ((nextBox == EnumBox.EMPTY || nextBox == EnumBox.WUMPUS) && !nextBoxVisited) {
 						if (isGoldAdjacent(nextRow, nextCol)) {
 							return true;
 						}
@@ -197,9 +207,9 @@ public class Board {
 					nextRow = actualRow + 1;
 					nextCol = actualCol;
 					if (nextRow < width && nextCol < width && nextRow >= 0 && nextCol >= 0) {
-						EnumCell nextCell = boardCloned[nextRow][nextCol];
-						boolean nextCellVisited = boardVisits[nextRow][nextCol];
-						if ((nextCell == EnumCell.EMPTY || nextCell == EnumCell.WUMPUS) && !nextCellVisited) {
+						EnumBox nextBox = boardCloned[nextRow][nextCol];
+						boolean nextBoxVisited = boardVisits[nextRow][nextCol];
+						if ((nextBox == EnumBox.EMPTY || nextBox == EnumBox.WUMPUS) && !nextBoxVisited) {
 							if (isGoldAdjacent(nextRow, nextCol)) {
 								return true;
 							}
@@ -214,9 +224,9 @@ public class Board {
 						nextRow = actualRow;
 						nextCol = actualCol - 1;
 						if (nextRow < width && nextCol < width && nextRow >= 0 && nextCol >= 0) {
-							EnumCell nextCell = boardCloned[nextRow][nextCol];
-							boolean nextCellVisited = boardVisits[nextRow][nextCol];
-							if ((nextCell == EnumCell.EMPTY || nextCell == EnumCell.WUMPUS) && !nextCellVisited) {
+							EnumBox nextBox = boardCloned[nextRow][nextCol];
+							boolean nextBoxVisited = boardVisits[nextRow][nextCol];
+							if ((nextBox == EnumBox.EMPTY || nextBox == EnumBox.WUMPUS) && !nextBoxVisited) {
 								if (isGoldAdjacent(nextRow, nextCol)) {
 									return true;
 								}
@@ -231,7 +241,7 @@ public class Board {
 							String[] previousMov = previousMovs.get(previousMovs.size() - 1).split(";");
 							actualRow = Integer.parseInt(previousMov[0]);
 							actualCol = Integer.parseInt(previousMov[1]);
-							if (previousMovs.size() > 1) { //not exit cell
+							if (previousMovs.size() > 1) { //not exit box
 								previousMovs.remove(previousMovs.size() - 1);
 							}
 						}
@@ -254,24 +264,24 @@ public class Board {
 	 * @return if GOLD is near
 	 */
 	private boolean isGoldAdjacent(int row, int col) {
-		return isGoldInCell(row - 1, col) || //up
-				isGoldInCell(row, col + 1) || //right
-				isGoldInCell(row - 1, col) || //down
-				isGoldInCell(row, col - 1); //left
+		return isGoldInBox(row - 1, col) || //up
+				isGoldInBox(row, col + 1) || //right
+				isGoldInBox(row - 1, col) || //down
+				isGoldInBox(row, col - 1); //left
 	}
 
 	/**
-	 * Check if GOLD cell is in this cell
+	 * Check if GOLD box is in this box
 	 *
 	 * @param row to search
 	 * @param col to search
 	 * @return if gold is there or not
 	 */
-	private boolean isGoldInCell(int row, int col) {
+	private boolean isGoldInBox(int row, int col) {
 		if (row >= width || col >= width || row < 0 || col < 0) { //outside
 			return false;
 		}
-		return board[row][col] == EnumCell.GOLD;
+		return board[row][col] == EnumBox.GOLD;
 	}
 
 	/**
@@ -283,23 +293,58 @@ public class Board {
 		return random.nextInt(width);
 	}
 
-
 	/**
-	 * Set the value of enumCell
+	 * Gets the next box. If the boolean is true, move the position. Else, only gets the box.
 	 *
-	 * @param actualCell value to set
+	 * @param movePosition yes or not
+	 * @return next box
 	 */
-	public void setActualCell(EnumCell actualCell) {
-		this.actualCell = actualCell;
+	public EnumBox getNextBox(boolean movePosition) {
+		switch (actualOrientation) {
+			case NORTH:
+				return moveNorth(movePosition);
+			case EAST:
+				return moveEast(movePosition);
+			case SOUTH:
+				return moveSouth(movePosition);
+			case WEAST:
+				return moveWeast(movePosition);
+		}
+		return null;
 	}
 
 	/**
-	 * Gets the actual cell
-	 *
-	 * @return cell
+	 * Set the message with the data of the actual box and next box
 	 */
-	public EnumCell getActualCell() {
-		return actualCell;
+	public void setAndPrintMessage() {
+		EnumBox actualBox = getActualBox();
+		EnumBox nextBox = getNextBox(false);
+		switch (actualBox) {
+			case EXIT:
+				if (nextBox == EnumBox.WUMPUS) {
+					lastMessage = EnumBox.EXIT_NEAR_WUMPUS.getMessage();
+				} else if (nextBox == EnumBox.HOLE) {
+					lastMessage = EnumBox.EXIT_NEAR_HOLE.getMessage();
+				} else {
+					lastMessage = EnumBox.EXIT.getMessage();
+				}
+				break;
+			case EMPTY:
+				if (nextBox == EnumBox.WUMPUS) {
+					lastMessage = EnumBox.NEAR_WUMPUS.getMessage();
+				} else if (nextBox == EnumBox.HOLE) {
+					lastMessage = EnumBox.NEAR_HOLE.getMessage();
+				} else {
+					lastMessage = EnumBox.EMPTY.getMessage();
+				}
+				break;
+			default:
+				lastMessage = actualBox.getMessage();
+		}
+		System.out.println("---------------------------------------------");
+		System.out.println("The message in the current box is:");
+		System.out.println(lastMessage);
+		System.out.println("---------------------------------------------");
 	}
 
 	/**
@@ -308,10 +353,183 @@ public class Board {
 	 * @return message
 	 */
 	protected String getSituation() {
-		String situation = "The situation for you is as follows:\n";
-		situation += "	Last message was: " + actualCell.getMessage() + ".\n";
-		situation += "	You have " + arrows + " arrows left.\n";
+		String situation = "The situation for the hunter is as follows:\n";
+		situation += "	Last message was: " + lastMessage + ".\n";
+		situation += "	Hunter has " + arrows + " arrows left.\n";
+		situation += "	Hunter is in row " + actualRow + " and column " + actualCol + ", looking " + actualOrientation.name() + ".\n";
 		return situation;
 	}
 
+	/**
+	 * Gets the box after a northward movement.
+	 *
+	 * @param movePosition if actual row and column must be updated or not
+	 * @return box
+	 */
+	private EnumBox moveNorth(boolean movePosition) {
+		int nextRow = actualRow - 1;
+		int nextCol = actualCol;
+		return moveGeneric(movePosition, nextRow, nextCol);
+	}
+
+	/**
+	 * Gets the box after a eastward movement.
+	 *
+	 * @param movePosition if actual row and column must be updated or not
+	 * @return box
+	 */
+	private EnumBox moveEast(boolean movePosition) {
+		int nextRow = actualRow;
+		int nextCol = actualCol + 1;
+		return moveGeneric(movePosition, nextRow, nextCol);
+	}
+
+	/**
+	 * Gets the box after a southward movement.
+	 *
+	 * @param movePosition if actual row and column must be updated or not
+	 * @return box
+	 */
+	private EnumBox moveSouth(boolean movePosition) {
+		int nextRow = actualRow + 1;
+		int nextCol = actualCol;
+		return moveGeneric(movePosition, nextRow, nextCol);
+	}
+
+	/**
+	 * Gets the box after a weastward movement.
+	 *
+	 * @param movePosition if actual row and column must be updated or not
+	 * @return box
+	 */
+	private EnumBox moveWeast(boolean movePosition) {
+		int nextRow = actualRow;
+		int nextCol = actualCol - 1;
+		return moveGeneric(movePosition, nextRow, nextCol);
+	}
+
+	/**
+	 * Move a generic position
+	 *
+	 * @param movePosition if actual row and column must be updated or not
+	 * @param nextRow      next box row
+	 * @param nextCol      next box col
+	 * @return next box
+	 */
+	private EnumBox moveGeneric(boolean movePosition, int nextRow, int nextCol) {
+		EnumBox actualBox = getActualBox();
+		if (nextRow < 0 || nextRow >= width || nextCol < 0 || nextCol >= width) {
+			lastMessage = EnumBox.WALL.getMessage();
+			return actualBox; //no move
+		}
+		if (movePosition) {
+			this.actualRow = nextRow;
+			this.actualCol = nextCol;
+		}
+		return board[nextRow][nextCol];
+	}
+
+	/**
+	 * Gets the actual box
+	 *
+	 * @return box
+	 */
+	public EnumBox getActualBox() {
+		return board[actualRow][actualCol];
+	}
+
+	/**
+	 * Rotate 90% left
+	 */
+	public void rotateLeft() {
+		switch (actualOrientation) {
+			case NORTH:
+				actualOrientation = EnumOrientation.WEAST;
+				break;
+			case EAST:
+				actualOrientation = EnumOrientation.NORTH;
+				break;
+			case SOUTH:
+				actualOrientation = EnumOrientation.EAST;
+				break;
+			case WEAST:
+				actualOrientation = EnumOrientation.SOUTH;
+				break;
+		}
+	}
+
+	/**
+	 * Rotate 90% right
+	 */
+	public void rotateRight() {
+		switch (actualOrientation) {
+			case NORTH:
+				actualOrientation = EnumOrientation.EAST;
+				break;
+			case EAST:
+				actualOrientation = EnumOrientation.SOUTH;
+				break;
+			case SOUTH:
+				actualOrientation = EnumOrientation.WEAST;
+				break;
+			case WEAST:
+				actualOrientation = EnumOrientation.NORTH;
+				break;
+		}
+	}
+
+	/**
+	 * Shoot to kill the Wumpus.
+	 */
+	public void shoot() {
+		if (arrows - 1 >= 0) {
+			if (wumpusInRange()) {
+				System.out.println("You have killed the Wumpus!!");
+				removeWumpus();
+			} else {
+				System.out.println("Sorry, i failed. Wumpus not in range.");
+			}
+			arrows--;
+		} else {
+			System.out.println("Sorry, I don't have arrows :(");
+		}
+	}
+
+	/**
+	 * Check if wumpus is in range
+	 *
+	 * @return
+	 */
+	private boolean wumpusInRange() {
+		int actualRowTmp = actualRow;
+		int actualColTmp = actualCol;
+		String lastMessageTmp = lastMessage;
+		EnumBox nextBox;
+		while (!lastMessage.equals(EnumBox.WALL.getMessage())) {
+			nextBox = getNextBox(true);
+			if (nextBox == EnumBox.WUMPUS) {
+				actualRow = actualRowTmp;
+				actualCol = actualColTmp;
+				return true;
+			}
+		}
+		actualRow = actualRowTmp;
+		actualCol = actualColTmp;
+		lastMessage = lastMessageTmp;
+		return false;
+	}
+
+	/**
+	 * Remove wumpus box
+	 */
+	private void removeWumpus() {
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < width; j++) {
+				if (board[i][j] == EnumBox.WUMPUS) {
+					board[i][j] = EnumBox.EMPTY;
+					break;
+				}
+			}
+		}
+	}
 }

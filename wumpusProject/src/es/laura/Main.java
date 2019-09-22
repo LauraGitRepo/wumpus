@@ -10,12 +10,6 @@ public class Main {
 
 	private Scanner scanner;
 
-	private boolean hunterIsDead = false;
-
-	private boolean hunterIsWinner = false;
-
-	private boolean exit = false;
-
 	private Board board;
 
 
@@ -34,7 +28,7 @@ public class Main {
 	private void initData() {
 
 		//maximum only for the duration that the game could have.
-		int width = inputInitData("cells in the board", 4, 10);
+		int width = inputInitData("boxs in the board", 4, 10);
 		int holes = inputInitData("holes in the board", 0, width * 2);
 		int arrows = inputInitData("arrows for the hunter", 0, 100);
 
@@ -73,39 +67,57 @@ public class Main {
 	 * Start
 	 */
 	private void startGame() {
+
+		boolean hunterIsDead = false;
+		boolean hunterHasTheGold = false;
+		boolean exit = false;
+
 		System.out.println("These are the actions you can choose:");
 		System.out.println(EnumChoice.getChoices());
 		System.out.println("You must press enter after each choice.");
 		System.out.println("Game ends when the hunter dies or when he gets the gold.");
 		System.out.println("\nWhat do you want to do?\n");
-		while (!hunterIsDead && !hunterIsWinner && !exit) {
+
+		while (!exit && !hunterIsDead) {
 			EnumChoice choice = EnumChoice.getChoice(scanner.nextLine().toUpperCase());
 			if (choice == null) {
 				System.out.println("You must enter a valid word.");
 			} else {
 				switch (choice) {
-					case UP:
-						break;
-					case DOWN:
-						break;
-					case LEFT:
-						break;
-					case RIGHT:
+					case MOVE:
+						EnumBox box = board.getNextBox(true);
+						board.setAndPrintMessage();
+						switch (box){
+							case HOLE:
+							case WUMPUS:
+								hunterIsDead = true;
+								break;
+							case GOLD:
+								hunterHasTheGold = true;
+								break;
+						}
 						break;
 					case ROTATE_LEFT:
+						board.rotateLeft();
+						board.setAndPrintMessage();
 						break;
 					case ROTATE_RIGHT:
+						board.rotateRight();
+						board.setAndPrintMessage();
 						break;
 					case SHOOT:
+						board.shoot();
 						break;
 					case EXIT:
-						if (board.getActualCell() == EnumCell.EXIT) {
+						if (board.getActualBox() == EnumBox.EXIT) {
 							exit = true;
+						} else {
+							System.out.println("You cannot leave if you are not in the exit box.");
 						}
 						break;
 					case HELP:
 						System.out.println(EnumChoice.getChoices());
-						System.out.println("-----------------------------------");
+						System.out.println("~~~~~~~~~~~~~~~~~~~~~~");
 						System.out.println(board.getSituation());
 						break;
 				}
@@ -114,7 +126,7 @@ public class Main {
 
 		if (hunterIsDead) {
 			System.out.println("Sorry, you are dead :(");
-		} else if (hunterIsWinner) {
+		} else if (hunterHasTheGold) {
 			System.out.println("Congratulations!!! You are the winner, you have the gold!");
 		}
 		System.out.println("********************************************************");
