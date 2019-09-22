@@ -6,6 +6,8 @@ package es.laura;
  */
 public enum EnumBox {
 	EMPTY("This box are empty"),
+	UNKNOWN("Unknown"),
+	HUNTER("Hunter"),
 	WUMPUS("Oh no!! The wumpus X.x"),
 	HOLE("NoooOooOoooooo.... (plof)"),
 	NEAR_WUMPUS("I think someone needs a shower..."),

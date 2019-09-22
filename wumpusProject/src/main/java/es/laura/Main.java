@@ -8,8 +8,14 @@ import java.util.Scanner;
  */
 public class Main {
 
+	/**
+	 * Util for gets the user input
+	 */
 	private Scanner scanner;
 
+	/**
+	 * Board with all data
+	 */
 	private Board board;
 
 
@@ -87,7 +93,7 @@ public class Main {
 					case MOVE:
 						EnumBox box = board.getNextBox(true);
 						board.setAndPrintMessage();
-						switch (box){
+						switch (box) {
 							case HOLE:
 							case WUMPUS:
 								hunterIsDead = true;
@@ -129,20 +135,36 @@ public class Main {
 		} else if (hunterHasTheGold) {
 			System.out.println("Congratulations!!! You are the winner, you have the gold!");
 		}
+
+		inputExitData();
+	}
+
+	/**
+	 * Choose the option: exit or play again
+	 */
+	private void inputExitData() {
 		System.out.println("********************************************************");
 		System.out.println("Do you want to play again? (yes/no)");
 
-		String nextLine = scanner.nextLine();
-		switch (nextLine) {
-			case "yes":
-				initData();
-				startGame();
-				break;
-			case "no":
-				System.exit(0);
-				break;
-			default:
-				System.out.println("You must enter a valid choice (yes/no)");
+		if (scanner.hasNextLine()) {
+			String value = scanner.nextLine();
+			switch (value) {
+				case "yes":
+					initData();
+					startGame();
+					break;
+				case "no":
+					System.exit(0);
+					break;
+				default:
+					System.out.println("You must enter a valid choice (yes/no)");
+					scanner.nextLine();
+					inputExitData();
+			}
+		} else {
+			System.out.println("You must enter a valid choice (yes/no)");
+			scanner.nextLine();
+			inputExitData();
 		}
 	}
 

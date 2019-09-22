@@ -39,8 +39,8 @@ public enum EnumChoice {
 		return descr;
 	}
 
-	protected static EnumChoice getChoice(String keyValue){
-		for(EnumChoice choice: values()){
+	protected static EnumChoice getChoice(String keyValue) {
+		for (EnumChoice choice : values()) {
 			if (choice.getKey().equals(keyValue)) {
 				return choice;
 			}

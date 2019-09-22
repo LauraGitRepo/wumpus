@@ -14,7 +14,7 @@ public class Board {
 	private int width;
 
 	/**
-	 * Number of holes in the board (Max 2*widtch)
+	 * Number of holes in the board (Max 2*width)
 	 */
 	private int holes;
 
@@ -26,7 +26,12 @@ public class Board {
 	/**
 	 * Board with all the box data
 	 */
-	private EnumBox[][] board;
+	private EnumBox[][] gameBoard;
+
+	/**
+	 * Board info recovered for the hunter
+	 */
+	private EnumBox[][] hunterBoard;
 
 	/**
 	 * Actual box of the game: message, row, column and orintation
@@ -51,7 +56,7 @@ public class Board {
 	 * @param holes  in the board
 	 * @param arrows of the hunter
 	 */
-	public Board(int width, int holes, int arrows) {
+	Board(int width, int holes, int arrows) {
 		this.width = width;
 		this.holes = holes;
 		this.arrows = arrows;
@@ -59,7 +64,8 @@ public class Board {
 		this.actualRow = width - 1;
 		random = new Random();
 		createBoard();
-		for (EnumBox[] enumBoxes : board) System.out.println(Arrays.toString(enumBoxes));
+
+		for (EnumBox[] enumBoxes : gameBoard) System.out.println(Arrays.toString(enumBoxes));
 
 		setAndPrintMessage();
 	}
@@ -68,17 +74,20 @@ public class Board {
 	 * Create a random but possible board
 	 */
 	private void createBoard() {
-		board = new EnumBox[width][width];
+		gameBoard = new EnumBox[width][width];
+		hunterBoard = new EnumBox[width][width];
 
 		//Init with empty boxs
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < width; j++) {
-				board[i][j] = EnumBox.EMPTY;
+				gameBoard[i][j] = EnumBox.EMPTY;
+				hunterBoard[i][j] = EnumBox.UNKNOWN; //init with unknown
 			}
 		}
 
 		//Fill the board with data
-		board[width - 1][0] = EnumBox.EXIT; //Hunter always start at same place
+		gameBoard[width - 1][0] = EnumBox.EXIT; //Hunter always start at same place
+		hunterBoard[width - 1][0] = EnumBox.HUNTER; //Hunter always start at same place
 
 		fillRandomBox(EnumBox.WUMPUS); //Wumpus can be in any empty box
 		fillRandomBox(EnumBox.GOLD); //Gold can be in any empty box
@@ -96,9 +105,9 @@ public class Board {
 	private void fillRandomBox(EnumBox box) {
 		int row = getRandomNumber();
 		int col = getRandomNumber();
-		EnumBox oldBox = board[row][col];
+		EnumBox oldBox = gameBoard[row][col];
 		if (oldBox == EnumBox.EMPTY) {
-			board[row][col] = box;
+			gameBoard[row][col] = box;
 		} else {
 			fillRandomBox(box);
 		}
@@ -117,16 +126,16 @@ public class Board {
 			int row = getRandomNumber();
 			int col = getRandomNumber();
 			String key = row + ";" + col;
-			EnumBox oldBox = board[row][col];
+			EnumBox oldBox = gameBoard[row][col];
 			if (!triedBoxs.contains(key) && oldBox == EnumBox.EMPTY) {
 
 				EnumBox[][] boardCloned = new EnumBox[width][width];
-				System.arraycopy(board, 0, boardCloned, 0, boardCloned.length);
+				System.arraycopy(gameBoard, 0, boardCloned, 0, boardCloned.length);
 
 				boardCloned[row][col] = EnumBox.HOLE;
 
 				if (isWinPossible(boardCloned)) {
-					board[row][col] = EnumBox.HOLE;
+					gameBoard[row][col] = EnumBox.HOLE;
 					holesFilled++;
 				} else {
 					boardCloned[row][col] = EnumBox.EMPTY;
@@ -281,7 +290,7 @@ public class Board {
 		if (row >= width || col >= width || row < 0 || col < 0) { //outside
 			return false;
 		}
-		return board[row][col] == EnumBox.GOLD;
+		return gameBoard[row][col] == EnumBox.GOLD;
 	}
 
 	/**
@@ -299,7 +308,7 @@ public class Board {
 	 * @param movePosition yes or not
 	 * @return next box
 	 */
-	public EnumBox getNextBox(boolean movePosition) {
+	EnumBox getNextBox(boolean movePosition) {
 		switch (actualOrientation) {
 			case NORTH:
 				return moveNorth(movePosition);
@@ -316,7 +325,7 @@ public class Board {
 	/**
 	 * Set the message with the data of the actual box and next box
 	 */
-	public void setAndPrintMessage() {
+	void setAndPrintMessage() {
 		EnumBox actualBox = getActualBox();
 		EnumBox nextBox = getNextBox(false);
 		switch (actualBox) {
@@ -352,11 +361,13 @@ public class Board {
 	 *
 	 * @return message
 	 */
-	protected String getSituation() {
+	String getSituation() {
+		for (EnumBox[] enumBoxes : hunterBoard) System.out.println(Arrays.toString(enumBoxes));
+
 		String situation = "The situation for the hunter is as follows:\n";
 		situation += "	Last message was: " + lastMessage + ".\n";
 		situation += "	Hunter has " + arrows + " arrows left.\n";
-		situation += "	Hunter is in row " + actualRow + " and column " + actualCol + ", looking " + actualOrientation.name() + ".\n";
+		situation += "	Hunter is in row " + (actualRow + 1) + " and column " + (actualCol + 1) + ", looking " + actualOrientation.name() + ".\n";
 		return situation;
 	}
 
@@ -423,10 +434,12 @@ public class Board {
 			return actualBox; //no move
 		}
 		if (movePosition) {
+			hunterBoard[actualRow][actualCol] = actualBox;
 			this.actualRow = nextRow;
 			this.actualCol = nextCol;
+			hunterBoard[actualRow][actualCol] = EnumBox.HUNTER;
 		}
-		return board[nextRow][nextCol];
+		return gameBoard[nextRow][nextCol];
 	}
 
 	/**
@@ -434,14 +447,14 @@ public class Board {
 	 *
 	 * @return box
 	 */
-	public EnumBox getActualBox() {
-		return board[actualRow][actualCol];
+	EnumBox getActualBox() {
+		return gameBoard[actualRow][actualCol];
 	}
 
 	/**
 	 * Rotate 90% left
 	 */
-	public void rotateLeft() {
+	void rotateLeft() {
 		switch (actualOrientation) {
 			case NORTH:
 				actualOrientation = EnumOrientation.WEAST;
@@ -461,7 +474,7 @@ public class Board {
 	/**
 	 * Rotate 90% right
 	 */
-	public void rotateRight() {
+	void rotateRight() {
 		switch (actualOrientation) {
 			case NORTH:
 				actualOrientation = EnumOrientation.EAST;
@@ -481,13 +494,13 @@ public class Board {
 	/**
 	 * Shoot to kill the Wumpus.
 	 */
-	public void shoot() {
+	void shoot() {
 		if (arrows - 1 >= 0) {
 			if (wumpusInRange()) {
 				System.out.println("You have killed the Wumpus!!");
 				removeWumpus();
 			} else {
-				System.out.println("Sorry, i failed. Wumpus not in range.");
+				System.out.println("Sorry, I failed. Wumpus not in range.");
 			}
 			arrows--;
 		} else {
@@ -498,7 +511,7 @@ public class Board {
 	/**
 	 * Check if wumpus is in range
 	 *
-	 * @return
+	 * @return true or false
 	 */
 	private boolean wumpusInRange() {
 		int actualRowTmp = actualRow;
@@ -525,11 +538,29 @@ public class Board {
 	private void removeWumpus() {
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < width; j++) {
-				if (board[i][j] == EnumBox.WUMPUS) {
-					board[i][j] = EnumBox.EMPTY;
+				if (gameBoard[i][j] == EnumBox.WUMPUS) {
+					gameBoard[i][j] = EnumBox.EMPTY;
 					break;
 				}
 			}
 		}
+	}
+
+	/**
+	 * Gets the value of board
+	 *
+	 * @return value of board
+	 */
+	EnumBox[][] getGameBoard() {
+		return gameBoard;
+	}
+
+	/**
+	 * Get the value of the remaining arrows.
+	 *
+	 * @return remaining arrows
+	 */
+	int getArrows() {
+		return arrows;
 	}
 }
