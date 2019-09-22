@@ -563,4 +563,31 @@ public class Board {
 	int getArrows() {
 		return arrows;
 	}
+
+	/**
+	 * Gets the value of actualOrientation
+	 *
+	 * @return value of actualOrientation
+	 */
+	public EnumOrientation getActualOrientation() {
+		return actualOrientation;
+	}
+
+	/**
+	 * Gets the value of actualRow
+	 *
+	 * @return value of actualRow
+	 */
+	public int getActualRow() {
+		return actualRow;
+	}
+
+	/**
+	 * Gets the value of actualCol
+	 *
+	 * @return value of actualCol
+	 */
+	public int getActualCol() {
+		return actualCol;
+	}
 }

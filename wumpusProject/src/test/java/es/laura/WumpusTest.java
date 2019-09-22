@@ -2,12 +2,15 @@ package es.laura;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 /**
  * @author Laura
  * @version 1.0.0
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class WumpusTest {
 
 	private Board board;
@@ -76,5 +79,33 @@ public class WumpusTest {
 		board.shoot();
 		Assert.assertEquals(0, board.getArrows());
 
+	}
+
+	@Test
+	public void doMoveAlongTest() {
+
+		int actualRow = width - 1;
+		int actualCol = 0;
+
+		//Move along north ->
+		actualRow = actualRow - 1;
+
+		board.getNextBox(true);
+		Assert.assertEquals(board.getActualRow(), actualRow);
+		Assert.assertEquals(board.getActualCol(), actualCol);
+
+	}
+
+	@Test
+	public void doRotateTest() {
+		board.rotateRight();
+		//begin with NORTH orientation
+		Assert.assertEquals(EnumOrientation.EAST, board.getActualOrientation());
+
+		board.rotateRight();
+		Assert.assertEquals(EnumOrientation.SOUTH, board.getActualOrientation());
+
+		board.rotateLeft();
+		Assert.assertEquals(EnumOrientation.EAST, board.getActualOrientation());
 	}
 }
